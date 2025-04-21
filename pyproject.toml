@@ -5,6 +5,7 @@ dependencies = [
     "numpy",
     "datasets",
     "tiktoken",
+    "tokenizers",
     "langchain",
     "langchain-core",
     "langchain-community",

@@ -1,16 +1,21 @@
 import logging
+import os
 import typing as t
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 
 import tiktoken
 from tiktoken.core import Encoding
+from tokenizers import Tokenizer
 
 from ragas.llms import BaseRagasLLM, llm_factory
 from ragas.prompt import PromptMixin
 from ragas.testset.graph import KnowledgeGraph, Node, Relationship
 
-DEFAULT_TOKENIZER = tiktoken.get_encoding("o200k_base")
+if os.environ.get("HUGGINGFACE_TOKENIZER", None):
+    DEFAULT_TOKENIZER = Tokenizer.from_pretrained(os.environ["HUGGINGFACE_TOKENIZER"])
+else:
+    DEFAULT_TOKENIZER = tiktoken.get_encoding("o200k_base")
 
 logger = logging.getLogger(__name__)
 
@@ -194,12 +199,15 @@ class LLMBasedExtractor(Extractor, PromptMixin):
     llm: BaseRagasLLM = field(default_factory=llm_factory)
     merge_if_possible: bool = True
     max_token_limit: int = 32000
-    tokenizer: Encoding = DEFAULT_TOKENIZER
+    tokenizer: t.Union[Encoding, Tokenizer] = DEFAULT_TOKENIZER
 
     def split_text_by_token_limit(self, text, max_token_limit):
 
         # Tokenize the entire input string
-        tokens = self.tokenizer.encode(text)
+        if os.environ.get("HUGGINGFACE_TOKENIZER", None):
+            tokens = self.tokenizer.encode(text).ids
+        else:
+            tokens = self.tokenizer.encode(text)
 
         # Split tokens into chunks of max_token_limit or less
         chunks = []

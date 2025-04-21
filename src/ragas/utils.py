@@ -11,12 +11,17 @@ from functools import lru_cache
 
 import numpy as np
 import tiktoken
+
+from tokenizers import Tokenizer
 from datasets import Dataset
 
 if t.TYPE_CHECKING:
     from ragas.metrics.base import Metric
 
 DEBUG_ENV_VAR = "RAGAS_DEBUG"
+
+if os.environ.get("HUGGINGFACE_TOKENIZER", None):
+    DEFAULT_TOKENIZER = Tokenizer.from_pretrained(os.environ["HUGGINGFACE_TOKENIZER"])
 
 
 @lru_cache(maxsize=1)
@@ -224,6 +229,8 @@ def camel_to_snake(name):
 
 def num_tokens_from_string(string: str, encoding_name: str = "cl100k_base") -> int:
     """Returns the number of tokens in a text string."""
+    if os.environ.get("HUGGINGFACE_TOKENIZER", None):
+        return len(DEFAULT_TOKENIZER.encode(string).ids)
     encoding = tiktoken.get_encoding(encoding_name)
     num_tokens = len(encoding.encode(string))
     return num_tokens
