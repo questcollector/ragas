@@ -13,6 +13,8 @@ import numpy as np
 import tiktoken
 from datasets import Dataset
 
+from ragas.integrations.huggingface import huggingface_tokenizer
+
 if t.TYPE_CHECKING:
     from ragas.metrics.base import Metric
 
@@ -224,6 +226,11 @@ def camel_to_snake(name):
 
 def num_tokens_from_string(string: str, encoding_name: str = "cl100k_base") -> int:
     """Returns the number of tokens in a text string."""
+    hf_tokenizer = huggingface_tokenizer()
+    if hf_tokenizer:
+        # Use Huggingface tokenizer if available
+        return len(hf_tokenizer.encode(string))
+
     encoding = tiktoken.get_encoding(encoding_name)
     num_tokens = len(encoding.encode(string))
     return num_tokens

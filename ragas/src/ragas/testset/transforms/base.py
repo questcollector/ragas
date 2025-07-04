@@ -4,13 +4,18 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 
 import tiktoken
-from tiktoken.core import Encoding
 
 from ragas.llms import BaseRagasLLM, llm_factory
 from ragas.prompt import PromptMixin
 from ragas.testset.graph import KnowledgeGraph, Node, Relationship
+from ragas.integrations.huggingface import huggingface_tokenizer, TokenizerProtocol
 
-DEFAULT_TOKENIZER = tiktoken.get_encoding("o200k_base")
+HF_TOKENIZER = huggingface_tokenizer()
+if HF_TOKENIZER:
+    DEFAULT_TOKENIZER: TokenizerProtocol = HF_TOKENIZER
+else:
+    DEFAULT_TOKENIZER: TokenizerProtocol = tiktoken.get_encoding("o200k_base")
+
 
 logger = logging.getLogger(__name__)
 
@@ -194,7 +199,7 @@ class LLMBasedExtractor(Extractor, PromptMixin):
     llm: BaseRagasLLM = field(default_factory=llm_factory)
     merge_if_possible: bool = True
     max_token_limit: int = 32000
-    tokenizer: Encoding = DEFAULT_TOKENIZER
+    tokenizer: TokenizerProtocol = DEFAULT_TOKENIZER
 
     def split_text_by_token_limit(self, text, max_token_limit):
 
